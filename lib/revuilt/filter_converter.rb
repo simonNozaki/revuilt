@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require 'revuilt/loggable'
+
 module Revuilt
 
   # Filter converter class.
   # Search Vue filter syntax and replace it with function call syntax
   class FilterConverter
+    include Loggable
+
     # PORO for result of conversion
     Result = Struct.new(:lines, :converted, :converted_lines, keyword_init: true)
 
@@ -18,6 +22,7 @@ module Revuilt
       @filter_name = filter_name
       @function_symbol = function_symbol
 
+      # e.g.: {{ payedAt | date }}(a number of spaces are ignored)
       @filter_syntax = Regexp.new(/{{ *[0-9a-zA-Z._()]+ *\| *#{filter_name} *}}/)
     end
 
@@ -38,15 +43,17 @@ module Revuilt
 
     # Create a new line with converted with function call syntax
     def create_converted_line(line, function_symbol, filter_syntax)
-      match_data = filter_syntax.match(line)
-      return if match_data.to_a.empty?
+      substrings = line.scan(filter_syntax)
+      return if substrings.to_a.empty?
 
-      # TODO: Actually, it's necessary to replace in the same way for multiple elements
-      # Match data is only matched Vue filter calling
-      match_text = match_data.to_a[0]
-      function_call = to_function_call_style(match_text, filter_name, function_symbol)
+      substrings.to_a.each do |substring|
+        function_call = to_function_call_style(substring, filter_name, function_symbol)
+        # Substring convert filter_syntax from head one by one
+        line = line.sub(filter_syntax) { function_call }
+        logger.info "#{substring} is converted by calling #{function_symbol}"
+      end
 
-      line.gsub(filter_syntax) { function_call }
+      line
     end
 
     # Format original Vue filter syntax to function call string

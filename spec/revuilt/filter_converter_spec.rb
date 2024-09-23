@@ -40,6 +40,21 @@ RSpec.describe Revuilt::FilterConverter do
         expect(results.lines).to eq ['<p>', '{{ $date(setDefaultDate(cart.item.registeredAt)) }}', '</p>']
       end
     end
+
+    context 'when a lines has multiple Vue filter callings' do
+      let(:lines) do
+        ['{{ payedAt | date }} {{ setDefaultDate(cart.item.registeredAt) | date }} {{ reviewedAt | date }}']
+      end
+
+      it 'should convert them all to function call style' do
+        result = converter.convert!
+
+        expect(result.converted).to eq true
+        expect(result.lines).to eq(
+          ['{{ $date(payedAt) }} {{ $date(setDefaultDate(cart.item.registeredAt)) }} {{ $date(reviewedAt) }}']
+        )
+      end
+    end
   end
 
   describe '#to_function_call' do
