@@ -18,7 +18,7 @@ module Revuilt
       @filter_name = filter_name
       @function_symbol = function_symbol
 
-      @filter_syntax = Regexp.new(/{{ [0-9a-zA-Z._]+ \| #{filter_name} }}/)
+      @filter_syntax = Regexp.new(/{{ *[0-9a-zA-Z._()]+ *\| *#{filter_name} *}}/)
     end
 
     def convert!
@@ -42,14 +42,23 @@ module Revuilt
       return if match_data.to_a.empty?
 
       # TODO: Actually, it's necessary to replace in the same way for multiple elements
+      # Match data is only matched Vue filter calling
       match_text = match_data.to_a[0]
-      tokens = match_text.split ' '
-      # The second element of split tokens should arguments of function calling( {{ e.item.price | price }} )
-      arg = tokens[1]
-      # Vue apps should use filter syntax in template, so wrap function call in double braces
-      function_call = "{{ #{function_symbol}(#{arg}) }}"
+      function_call = to_function_call_style(match_text, filter_name, function_symbol)
 
       line.gsub(filter_syntax) { function_call }
+    end
+
+    # Format original Vue filter syntax to function call string
+    def to_function_call_style(text, filter_name, function_symbol)
+      # Split and remove template elements
+      tokens = text.split(/[{}| ]/)
+      function_args = tokens.reject { ['', filter_name].include?(_1) }
+      return if function_args.empty?
+
+      arg = function_args[0]
+      # Vue apps should use filter syntax in template, so wrap function call in double braces
+      "{{ #{function_symbol}(#{arg}) }}"
     end
 
     def to_result(lines, converted_lines)
