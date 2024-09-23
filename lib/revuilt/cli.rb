@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'revuilt/loggable'
-require 'revuilt/cli_option_parser'
+require 'revuilt/revuilt_option_parser'
 require 'revuilt/filter_converter'
 
 module Revuilt
@@ -12,7 +12,8 @@ module Revuilt
       attr_reader :argv,
                   :dir,
                   :filter_name,
-                  :function_symbol
+                  :function_symbol,
+                  :only_write_temporary
 
       def initialize(argv)
         @argv = argv
@@ -21,6 +22,7 @@ module Revuilt
         @dir = options[:dir]
         @filter_name = options[:filter_name]
         @function_symbol = options[:function_symbol]
+        @only_write_temporary = options[:only_write_temporary]
       end
 
       # Main function
@@ -71,14 +73,11 @@ module Revuilt
       # TODO: swap new file with old one
       def replace_to_new_file(lines, path)
         tmp_file_path = "#{path}.tmp"
+        File.delete(tmp_file_path) if File.exist?(tmp_file_path)
+        File.open(tmp_file_path, 'w') { |file| file.write(lines.join) }
 
-        File.delete tmp_file_path if File.exist? tmp_file_path
-
-        File.open tmp_file_path, 'w' do |file|
-          file.write lines.join
-        end
-
-        # TODO: delete original file
+        # TODO: delete original file(add else-clause)
+        return if only_write_temporary
       end
     end
 

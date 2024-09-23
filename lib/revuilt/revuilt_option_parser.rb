@@ -6,7 +6,6 @@ require 'revuilt/options/filter_name'
 require 'revuilt/options/function_symbol'
 
 module Revuilt
-
   # CLI option parser. Check option is valid and create options object parsing ARGV
   class CliOptionParser
     # FIXME: maybe redundant including
@@ -22,14 +21,7 @@ module Revuilt
       @filter_name = FilterName.new('')
       @function_symbol = FunctionSymbol.new('')
 
-      @option_parser = OptionParser.new do |parser|
-        # TODO: helpful CLI usage
-        parser.banner = 'Usage: revuilt [options]'
-
-        parser.on('-d', '--dir [DIR]', String) { @dir = Dir.new(_1) }
-        parser.on('-f', '--filter-name [FILTER_NAME]', String) { @filter_name = FilterName.new(_1) }
-        parser.on('-s', '--function-symbol [FUNCTION_SYMBOL]', String) { @function_symbol = FunctionSymbol.new(_1) }
-      end
+      @option_parser = build_option_parser
     end
 
     def parse_or_raise(argv)
@@ -51,6 +43,26 @@ module Revuilt
       message = error_messages.join('; ')
       raise ArgumentError, message
     end
+
+    # rubocop:disable Metrics/MethodLength
+    def build_option_parser
+      OptionParser.new do |parser|
+        # TODO: helpful CLI usage
+        parser.banner = 'Usage: revuilt [options]'
+
+        parser.on('-d', '--dir DIR', 'Target directory to convert') { @dir = Dir.new(_1) }
+        parser.on('-f', '--filter-name FILTER_NAME', 'Vue filter name to convert') do
+          @filter_name = FilterName.new(_1)
+        end
+        parser.on('-s', '--function-symbol FUNCTION_SYMBOL', 'Converting function name alternative to Vue filter') do
+          @function_symbol = FunctionSymbol.new(_1)
+        end
+        parser.on('-t', '--only-write-temporary', 'Only write .tmp file when this flag is true') do
+          @only_write_temporary = _1
+        end
+      end
+    end
+    # rubocop:enable Metrics/MethodLength
 
     class << self
       def parse_or_raise(argv)
