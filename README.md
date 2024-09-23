@@ -28,11 +28,12 @@ For migrating Vue app to Vue.js 3, all Vue filters should be deprecated. Revuilt
 
 ### options:
 
-| # | option name             | required | description                                                              |
-|---|-------------------------|----------|--------------------------------------------------------------------------|
-| 1 | -d / --dir              | true     | Converting target  root directory. CLI search filter syntax recursively. |
-| 2 | -f / --filter-name      | true     | Vue filter name to replace function call                                 |
-| 3 | -s / --function--symbol | true     | Function symbol that is alternative to Vue filter                        |
+| # | option name                 | required | description                                                              |
+|---|-----------------------------|----------|--------------------------------------------------------------------------|
+| 1 | -d / --dir                  | true     | Converting target  root directory. CLI search filter syntax recursively. |
+| 2 | -f / --filter-name          | true     | Vue filter name to replace function call                                 |
+| 3 | -s / --function--symbol     | true     | Function symbol that is alternative to Vue filter                        |
+| 4 | -t / --only-write-temporary | false    | Revuilt does not swap with new file when this flag in on.                |
 
 ## Development
 ### Prerequisite
