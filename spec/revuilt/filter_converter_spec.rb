@@ -40,6 +40,47 @@ RSpec.describe Revuilt::FilterConverter do
         expect(results.lines).to eq ['<p>', '{{ $date(setDefaultDate(cart.item.registeredAt)) }}', '</p>']
       end
     end
+
+    context 'when a line has some types of Vue filter callings' do
+      let(:lines) { ['{{ payedAt | date }} {{ item.price | price }}'] }
+
+      it 'should convert only `date` filter' do
+        results = converter.convert!
+
+        expect(results.converted).to eq true
+        expect(results.lines).to eq(
+          ['{{ $date(payedAt) }} {{ item.price | price }}']
+        )
+      end
+    end
+
+    context 'when a line has multiple replacement targets' do
+      let(:lines) { ['{{ entryStartedAt | date }}~{{ entryEndedAt | date }}: {{ item.price | price }}'] }
+
+      it 'should convert matched filter all to function callings' do
+        results = converter.convert!
+
+        expect(results.converted).to eq true
+        expect(results.lines).to eq [
+          '{{ $date(entryStartedAt) }}~{{ $date(entryEndedAt) }}: {{ item.price | price }}'
+        ]
+      end
+    end
+
+    # rubocop:disable Style/LineLength
+    context 'when Vue filter arguments has some conditions' do
+      let(:lines) { ['<template v-if="shouldShow">{{ transaction.billedDate ? transaction.billedDate : getDefaultDate() | date }}</template>'] }
+
+      it 'should wrap those with function calling' do
+        results = converter.convert!
+
+        expect(results.converted).to eq true
+        expect(results.lines).to eq [
+          '<template v-if="shouldShow">{{ $date(transaction.billedDate ? transaction.billedDate : getDefaultDate()) }}</template>'
+        ]
+      end
+    end
+    # rubocop:enable Style/LineLength
   end
 
   describe '#to_function_call' do
@@ -69,7 +110,7 @@ RSpec.describe Revuilt::FilterConverter do
         let(:subject) { spec_case[:condition] }
 
         it "should be #{spec_case[:expectation]}" do
-          result = converter.to_function_call_style(spec_case[:condition], filter_name, function_symbol)
+          result = converter.to_function_call_style(spec_case[:condition], function_symbol)
 
           expect(result).to eq(spec_case[:expectation])
         end
