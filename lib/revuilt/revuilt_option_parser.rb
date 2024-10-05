@@ -7,7 +7,7 @@ require 'revuilt/options/function_symbol'
 
 module Revuilt
   # CLI option parser. Check option is valid and create options object parsing ARGV
-  class CliOptionParser
+  class RevuiltOptionParser
     # FIXME: maybe redundant including
     include Options
 
@@ -65,7 +65,7 @@ module Revuilt
 
     class << self
       def parse_or_raise(argv)
-        CliOptionParser.new.parse_or_raise argv
+        RevuiltOptionParser.new.parse_or_raise argv
       end
     end
   end
