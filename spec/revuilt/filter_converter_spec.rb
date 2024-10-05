@@ -19,6 +19,19 @@ RSpec.describe Revuilt::FilterConverter do
       end
     end
 
+    context 'a line has simple mustache expression' do
+      let(:lines) { ['<ul v-for="item in items" :key="item.id"> {{ item.name }} {{ item.price | date }} </ul>'] }
+
+      it 'should be converted only Vue filter syntax' do
+        results = converter.convert!
+
+        expect(results.converted).to eq true
+        expect(results.lines).to eq [
+          '<ul v-for="item in items" :key="item.id"> {{ item.name }} {{ $date(item.price) }} </ul>'
+        ]
+      end
+    end
+
     context 'when there are some lines with Vue filter syntax' do
       let(:lines) { ['{{ payedAt | date }}', '{{ item.price | price }}'] }
 
@@ -115,6 +128,11 @@ RSpec.describe Revuilt::FilterConverter do
         description: 'function calling',
         condition: '{{ setDefaultDate(detail.startedAt) | date }}',
         expectation: '{{ $date(setDefaultDate(detail.startedAt)) }}'
+      },
+      {
+        description: 'simple mustache syntax',
+        condition: '{{ item.price }}',
+        expectation: '{{ item.price }}'
       }
     ].each do |spec_case|
       context "when filter syntax in template has #{spec_case[:description]}" do

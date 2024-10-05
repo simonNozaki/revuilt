@@ -39,20 +39,25 @@ module Revuilt
       to_result(lines, converted_lines)
     end
 
+    # Convert Vue filter syntax in a line of a file
+    # Starting from 0, traverse text that may will be converted by move cursor recursively
     def convert_filter_syntax(line, filter_name, function_symbol, head = 0)
       head, tail = find_mustache_bounds line, head
       return line if tail.nil?
 
-      mustached_text = line[head..tail]
-      function_call = to_function_call_style(mustached_text, function_symbol)
+      # Check rest text from previous tail position
+      mustache_text = line[head..tail]
+      return convert_filter_syntax line, filter_name, function_symbol, tail unless mustache_text.include? '|'
+
+      function_call = to_function_call_style(mustache_text, function_symbol)
       new_line = line.dup
       new_line[head..tail] = function_call
 
-      # End condition to exit all conversions
-      return new_line unless new_line.match?(filter_syntax)
+      # Return converted line when all rest text has no Vue filter syntax
+      return new_line unless new_line.match?(filter_syntax, head)
 
       # Traverse rest text that may have convertable texts
-      next_head = tail + (mustached_text.length - function_call.length)
+      next_head = tail + (mustache_text.length - function_call.length)
       convert_filter_syntax(new_line, filter_name, function_symbol, next_head)
     end
 
@@ -62,15 +67,15 @@ module Revuilt
       mustache_start = start_match&.begin(0)
       end_match = line.match /}}/, head
       mustache_end = end_match ? end_match.end(0) - 1 : nil
-      return if mustache_start.nil? || mustache_end.nil?
+      return nil if mustache_start.nil? || mustache_end.nil?
 
-      has_pipe = line[mustache_start, mustache_end].include? '|'
-
-      has_pipe ? [mustache_start, mustache_end] : nil
+      [mustache_start, mustache_end]
     end
 
     # Format original Vue filter syntax to function call string
     def to_function_call_style(text, function_symbol)
+      return text unless text.include? '|'
+
       first_text = text.split('|')[0]
       return nil if first_text.nil?
 
