@@ -30,6 +30,17 @@ RSpec.describe Revuilt::FilterConverter do
       end
     end
 
+    context 'when DOM element wraps Vue filter syntax' do
+      let(:lines) { ['  <p><span>{{ entryAt | date }}</span></P'] }
+
+      it 'should convert it to function calling' do
+        results = converter.convert!
+
+        expect(results.converted).to eq true
+        expect(results.lines).to eq ['  <p><span>{{ $date(entryAt) }}</span></P']
+      end
+    end
+
     context 'when a line includes function call before Vue filter calling' do
       let(:lines) { ['<p>', '{{ setDefaultDate(cart.item.registeredAt) | date }}', '</p>'] }
 

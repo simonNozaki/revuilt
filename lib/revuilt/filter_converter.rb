@@ -39,17 +39,34 @@ module Revuilt
       to_result(lines, converted_lines)
     end
 
-    # Create a new line with converted with function call syntax
-    def create_converted_line(line, function_symbol, filter_syntax)
-      substrings = line.scan(filter_syntax)
-      return if substrings.to_a.empty?
+    def convert_filter_syntax(line, filter_name, function_symbol, head = 0)
+      head, tail = find_mustache_bounds line, head
+      return line if tail.nil?
 
-      substrings.to_a.each do |match_text|
-        function_call = to_function_call_style(match_text, function_symbol)
-        line = line.sub(filter_syntax) { function_call }
-      end
+      mustached_text = line[head..tail]
+      function_call = to_function_call_style(mustached_text, function_symbol)
+      new_line = line.dup
+      new_line[head..tail] = function_call
 
-      line
+      # End condition to exit all conversions
+      return new_line unless new_line.match?(filter_syntax)
+
+      # Traverse rest text that may have convertable texts
+      next_head = tail + (mustached_text.length - function_call.length)
+      convert_filter_syntax(new_line, filter_name, function_symbol, next_head)
+    end
+
+    # Get mustached range including Vue filter syntax
+    def find_mustache_bounds(line, head)
+      start_match = line.match /{{/, head
+      mustache_start = start_match&.begin(0)
+      end_match = line.match /}}/, head
+      mustache_end = end_match ? end_match.end(0) - 1 : nil
+      return if mustache_start.nil? || mustache_end.nil?
+
+      has_pipe = line[mustache_start, mustache_end].include? '|'
+
+      has_pipe ? [mustache_start, mustache_end] : nil
     end
 
     # Format original Vue filter syntax to function call string
@@ -62,50 +79,6 @@ module Revuilt
       arg = expression.strip
 
       "{{ #{function_symbol}(#{arg}) }}"
-    end
-
-    def convert_filter_syntax(line, filter_name, function_symbol, head = 0)
-      head, tail = get_mustached_range line, head
-      return line if tail.nil?
-
-      mustached_text = line[head..tail]
-      function_call = to_function_call_style(mustached_text, function_symbol)
-      new_line = line.dup
-      new_line[head..tail] = function_call
-
-      # End condition to exit all conversions
-      return new_line unless new_line.match?(filter_syntax)
-
-      # Traverse rest text that may will be converted
-      next_head = tail + (mustached_text.length - function_call.length)
-      convert_filter_syntax(new_line, filter_name, function_symbol, next_head)
-    end
-
-    def get_mustached_range(line, head)
-      has_pipe = false
-      tail = 0
-
-      chars = line.split ''
-      chars.each.with_index(head) do |_, index|
-        next if line.length == index
-
-        char = chars[index]
-        next_char = line[index + 1]
-        if char == '{' && next_char == '{'
-          head = index
-          next
-        end
-        if char == '|'
-          has_pipe = true
-          next
-        end
-        if char == '}' && next_char == '}'
-          tail = index + 1
-          break
-        end
-      end
-
-      has_pipe ? [head, tail] : nil
     end
 
     def to_result(lines, converted_lines)
