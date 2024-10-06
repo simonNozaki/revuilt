@@ -54,7 +54,7 @@ module Revuilt
 
       def readlines_or_raise(path)
         File.readlines(path)
-      rescue Errno::ENOENT => e
+      rescue Errno::ENOENT
         logger.error "Error occurred when reading lines of #{path}."
         raise
       end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module Revuilt
-
   # Filter converter class.
   # Search Vue filter syntax and replace it with function call syntax
   class FilterConverter
@@ -63,9 +62,9 @@ module Revuilt
 
     # Get mustached range including Vue filter syntax
     def find_mustache_bounds(line, head)
-      start_match = line.match /{{/, head
+      start_match = line.match(/{{/, head)
       mustache_start = start_match&.begin(0)
-      end_match = line.match /}}/, head
+      end_match = line.match(/}}/, head)
       mustache_end = end_match ? end_match.end(0) - 1 : nil
       return nil if mustache_start.nil? || mustache_end.nil?
 
