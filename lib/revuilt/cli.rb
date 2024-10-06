@@ -17,7 +17,7 @@ module Revuilt
 
       def initialize(argv)
         @argv = argv
-        options = CliOptionParser.parse_or_raise(argv)
+        options = RevuiltOptionParser.parse_or_raise(argv)
 
         @dir = options[:dir]
         @filter_name = options[:filter_name]
@@ -54,9 +54,9 @@ module Revuilt
 
       def readlines_or_raise(path)
         File.readlines(path)
-      rescue Errno::ENOENT => e
+      rescue Errno::ENOENT
         logger.error "Error occurred when reading lines of #{path}."
-        raise e
+        raise
       end
 
       # read lines and replace to function when there are some matches
