@@ -1,0 +1,27 @@
+---
+language: "ja"
+early_access: false
+reviews:
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: "**/*.rs"
+      instructions: "|
+        一般的なRubyのベストプラクティスをもとにレビューをしてください。
+        コードフォーマット、スタイルに始まりエラーハンドリングやロギングなど幅広いトピックについてコメントをしてください。
+        特に、クラス設計やメソッド、クラスの責務は注意してレビューしてください。
+      "
+  auto_review:
+    enabled: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+    drafts: false
+    base_branches:
+      - "develop"
+      - "feat/*"
+chat:
+  auto_reply: true
