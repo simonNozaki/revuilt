@@ -46,10 +46,9 @@ RSpec.describe Revuilt::CLI::Cli do
       it 'should not convert anything' do
         cli.swap_file_deep dir
 
-        %w[Cart.vue CartItem.vue CartItemPayment.vue].each do |entry|
-          path = "/home/auto-test/demo/components/#{entry}"
-          expect(cli).to have_received(:convert_lines).with(path)
-        end
+        expect(cli).to have_received(:convert_lines).with '/home/auto-test/demo/components/Cart.vue'
+        expect(cli).to have_received(:convert_lines).with '/home/auto-test/demo/components/CartItem.vue'
+        expect(cli).to have_received(:convert_lines).with '/home/auto-test/demo/components/CartItemPayment.vue'
       end
     end
 
@@ -66,17 +65,15 @@ RSpec.describe Revuilt::CLI::Cli do
         allow(File).to receive(:stat)
           .with('/home/auto-test/components/README.md')
           .and_return instance_double File::Stat, file?: true, directory?: false
-        allow(Dir).to receive(:entries)
-          .with('/home/auto-test/components/cart')
-          .and_return %w[. .. CartItem.vue CartItemDetail.vue]
-        allow(File).to receive(:stat)
-          .with('/home/auto-test/components/cart')
-          .and_return instance_double File::Stat,
-                                      file?: false, directory?: true
-        %w[CartItem.vue CartItemDetail.vue].each do |entry|
-          path = "/home/auto-test/components/cart/#{entry}"
-          allow(File).to receive(:stat).with(path).and_return instance_double File::Stat, file?: true, directory?: false
-          allow(cli).to receive(:convert_lines).with(path).and_return false
+        '/home/auto-test/components/cart'.then do |entry|
+          allow(File).to receive(:stat).with(entry).and_return instance_double File::Stat, file?: false,
+                                                                                           directory?: true
+          allow(Dir).to receive(:entries).with(entry).and_return %w[. .. CartItem.vue CartItemDetail.vue]
+          %w[CartItem.vue CartItemDetail.vue].each do |vue|
+            path = "#{entry}/#{vue}"
+            allow(File).to receive(:stat).with(path).and_return instance_double File::Stat, file?: true, directory?: false
+            allow(cli).to receive(:convert_lines).with(path).and_return false
+          end
         end
       end
 
@@ -87,6 +84,37 @@ RSpec.describe Revuilt::CLI::Cli do
         expect(cli).to have_received(:convert_lines).with '/home/auto-test/components/Cart.vue'
         expect(cli).to have_received(:convert_lines).with '/home/auto-test/components/cart/CartItem.vue'
         expect(cli).to have_received(:convert_lines).with '/home/auto-test/components/cart/CartItemDetail.vue'
+      end
+    end
+
+    context 'when directories have multiple nested directories' do
+      let(:dir) { '/home/auto-test/components' }
+
+      before do
+        '/home/auto-test/components'.then do |entry|
+          allow(Dir).to receive(:entries).with(entry).and_return %w[. .. cart]
+        end
+        '/home/auto-test/components/cart'.then do |entry|
+          allow(File).to receive(:stat).with(entry).and_return instance_double File::Stat, file?: false,
+                                                                                           directory?: true
+          allow(Dir).to receive(:entries).with(entry).and_return %w[. .. internals]
+        end
+        '/home/auto-test/components/cart/internals'.then do |entry|
+          allow(File).to receive(:stat).with(entry).and_return instance_double File::Stat, file?: false,
+                                                                                           directory?: true
+          allow(Dir).to receive(:entries).with(entry).and_return %w[. .. CartItemPrice.vue]
+        end
+        '/home/auto-test/components/cart/internals/CartItemPrice.vue'.then do |entry|
+          allow(File).to receive(:stat).with(entry).and_return instance_double File::Stat, file?: true,
+                                                                                           directory?: false
+          allow(cli).to receive(:convert_lines).with(entry).and_return false
+        end
+      end
+
+      it 'should traverse and convert' do
+        cli.swap_file_deep dir
+
+        expect(cli).to have_received(:convert_lines).with '/home/auto-test/components/cart/internals/CartItemPrice.vue'
       end
     end
   end
