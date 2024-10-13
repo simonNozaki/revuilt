@@ -1,47 +1,23 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require 'revuilt/options/dir'
-require 'revuilt/options/filter_name'
-require 'revuilt/options/function_symbol'
 
 module Revuilt
   # CLI option parser. Check option is valid and create options object parsing ARGV
   class RevuiltOptionParser
-    # FIXME: maybe redundant including
-    include Options
-
-    attr_reader :dir,
-                :filter_name,
-                :function_symbol,
-                :option_parser
-
     def initialize
-      @dir = Dir.new('')
-      @filter_name = FilterName.new('')
-      @function_symbol = FunctionSymbol.new('')
-
       @option_parser = build_option_parser
     end
 
     def parse_or_raise(argv)
-      option_parser.parse argv
-      assert_options
+      @option_parser.parse argv
 
       {
-        dir: dir.value,
-        filter_name: filter_name.value,
-        function_symbol: function_symbol.value
+        dir: @dir,
+        filter_name: @filter_name,
+        function_symbol: @function_symbol,
+        only_write_temporary: @only_write_temporary
       }
-    end
-
-    # Assert CLI args are all valid
-    def assert_options
-      error_messages = [dir, filter_name, function_symbol].filter(&:errors?).flat_map(&:errors)
-      return unless error_messages.length.positive?
-
-      message = error_messages.join('; ')
-      raise ArgumentError, message
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -49,12 +25,10 @@ module Revuilt
       OptionParser.new do |parser|
         parser.banner = 'Usage: revuilt [options]'
 
-        parser.on('-d', '--dir DIR', 'Target directory to convert') { @dir = Dir.new(_1) }
-        parser.on('-f', '--filter-name FILTER_NAME', 'Vue filter name to convert') do
-          @filter_name = FilterName.new(_1)
-        end
-        parser.on('-s', '--function-symbol FUNCTION_SYMBOL', 'Converting function name alternative to Vue filter') do
-          @function_symbol = FunctionSymbol.new(_1)
+        parser.on('-d', '--dir=DIR', 'Target directory to convert') { @dir = _1 }
+        parser.on('-f', '--filter-name=FILTER_NAME', 'Vue filter name to convert') { @filter_name = _1 }
+        parser.on('-s', '--function-symbol=FUNCTION_SYMBOL', 'Converting function name alternative to Vue filter') do
+          @function_symbol = _1
         end
         parser.on('-t', '--only-write-temporary', 'Only write .tmp file when this flag is true') do
           @only_write_temporary = _1

@@ -71,7 +71,8 @@ RSpec.describe Revuilt::CLI::Cli do
           allow(Dir).to receive(:entries).with(entry).and_return %w[. .. CartItem.vue CartItemDetail.vue]
           %w[CartItem.vue CartItemDetail.vue].each do |vue|
             path = "#{entry}/#{vue}"
-            allow(File).to receive(:stat).with(path).and_return instance_double File::Stat, file?: true, directory?: false
+            allow(File).to receive(:stat).with(path).and_return instance_double File::Stat, file?: true,
+                                                                                            directory?: false
             allow(cli).to receive(:convert_lines).with(path).and_return false
           end
         end

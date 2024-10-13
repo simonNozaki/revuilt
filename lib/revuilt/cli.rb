@@ -10,43 +10,39 @@ module Revuilt
       include Loggable
 
       attr_reader :dir,
-                  :filter_name,
-                  :function_symbol,
                   :only_write_temporary
 
       def initialize(options)
+        raise ArgumentError unless options.is_a? Hash
+
         @dir = options[:dir]
-        @filter_name = options[:filter_name]
-        @function_symbol = options[:function_symbol]
         @only_write_temporary = options[:only_write_temporary]
+        @filter_converter = FilterConverter.new options[:filter_name], options[:function_symbol]
       end
 
-      # Main function
       def call
-        swap_file_deep(dir)
+        swap_file_deep dir
       end
 
       def swap_file_deep(dir)
         Dir.entries(dir).reject { %w[. ..].include?(_1) }.each do |path_like|
           entry = "#{dir}/#{path_like}"
-          entry_stat = File.stat(entry)
+          entry_stat = File.stat entry
 
           if entry_stat.file? && entry.match?(/.vue$/)
-            convert_lines(entry)
+            convert_lines entry
             next
           end
 
-          next unless entry_stat.directory?
-
           # Traverse sub directory
-          swap_file_deep(entry)
+          swap_file_deep entry if entry_stat.directory?
         end
       end
 
       # read lines and replace to function when there are some matches
       def convert_lines(entry)
         lines = File.readlines entry
-        result = FilterConverter.new(lines, filter_name, function_symbol).convert!
+        result = @filter_converter.convert! lines
         return false unless result.converted
 
         logger.info "Entry #{entry} has been converted to function call with #{result.converted_lines.length} lines."
@@ -61,7 +57,7 @@ module Revuilt
       def replace_to_new_file(lines, path)
         tmp_file_path = "#{path}.tmp"
         File.delete tmp_file_path if File.exist? tmp_file_path
-        File.open(tmp_file_path, 'w') { |file| file.write(lines.join) }
+        File.open(tmp_file_path, 'w') { _1.write lines.join }
 
         return if only_write_temporary
 

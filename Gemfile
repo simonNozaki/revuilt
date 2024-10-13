@@ -2,6 +2,11 @@
 
 source 'https://rubygems.org'
 
-gem 'rspec', '~> 3.13'
-gem 'rubocop'
-gem 'ruby-debug-ide'
+group :test do
+  gem 'rspec', '~> 3.13'
+end
+
+group :development do
+  gem 'rubocop', require: false
+  gem 'ruby-debug-ide', require: false
+end
