@@ -10,15 +10,14 @@ module Revuilt
       include Loggable
 
       attr_reader :dir,
-                  :filter_name,
-                  :function_symbol,
                   :only_write_temporary
 
       def initialize(options)
+        raise ArgumentError unless options.is_a? Hash
+
         @dir = options[:dir]
-        @filter_name = options[:filter_name]
-        @function_symbol = options[:function_symbol]
         @only_write_temporary = options[:only_write_temporary]
+        @filter_converter = FilterConverter.new options[:filter_name], options[:function_symbol]
       end
 
       def call
@@ -43,7 +42,7 @@ module Revuilt
       # read lines and replace to function when there are some matches
       def convert_lines(entry)
         lines = File.readlines entry
-        result = FilterConverter.new(lines, filter_name, function_symbol).convert!
+        result = @filter_converter.convert! lines
         return false unless result.converted
 
         logger.info "Entry #{entry} has been converted to function call with #{result.converted_lines.length} lines."

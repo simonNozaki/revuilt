@@ -7,13 +7,11 @@ module Revuilt
     # PORO for result of conversion
     Result = Struct.new(:lines, :converted, :converted_lines, keyword_init: true)
 
-    attr_reader :lines,
-                :function_symbol,
+    attr_reader :function_symbol,
                 :filter_name,
                 :filter_syntax
 
-    def initialize(lines, filter_name, function_symbol)
-      @lines = lines
+    def initialize(filter_name, function_symbol)
       @filter_name = filter_name
       @function_symbol = function_symbol
 
@@ -21,7 +19,7 @@ module Revuilt
       @filter_syntax = Regexp.new(/{{.*\| *#{filter_name} *}}/)
     end
 
-    def convert!
+    def convert!(lines)
       converted_lines = []
       lines.each_with_index do |line, index|
         while line.match?(filter_syntax)

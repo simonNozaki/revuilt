@@ -5,14 +5,14 @@ RSpec.describe Revuilt::FilterConverter do
   let(:filter_name) { 'date' }
   let(:function_symbol) { '$date' }
 
-  let(:converter) { described_class.new(lines, filter_name, function_symbol) }
+  let(:converter) { described_class.new(filter_name, function_symbol) }
 
   describe '#convert!' do
     context 'when lines have no replacement targets' do
       let(:lines) { ['<section>', '  <h1>Title</h1>', '</div>'] }
 
       it 'should return original lines' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq false
         expect(results.lines).to eq lines
@@ -23,7 +23,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['<ul v-for="item in items" :key="item.id"> {{ item.name }} {{ item.price | date }} </ul>'] }
 
       it 'should be converted only Vue filter syntax' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq [
@@ -36,7 +36,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['{{ payedAt | date }}', '{{ item.price | price }}'] }
 
       it 'should replace filter syntax with function call' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq ['{{ $date(payedAt) }}', '{{ item.price | price }}']
@@ -47,7 +47,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['  <p><span>{{ entryAt | date }}</span></P'] }
 
       it 'should convert it to function calling' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq ['  <p><span>{{ $date(entryAt) }}</span></P']
@@ -58,7 +58,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['<p>', '{{ setDefaultDate(cart.item.registeredAt) | date }}', '</p>'] }
 
       it 'should replace filter syntax with function call' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq ['<p>', '{{ $date(setDefaultDate(cart.item.registeredAt)) }}', '</p>']
@@ -69,7 +69,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['{{ payedAt | date }} {{ item.price | price }}'] }
 
       it 'should convert only `date` filter' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq(
@@ -82,7 +82,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['{{ entryStartedAt | date }}~{{ entryEndedAt | date }}: {{ item.price | price }}'] }
 
       it 'should convert matched filter all to function callings' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq [
@@ -96,7 +96,7 @@ RSpec.describe Revuilt::FilterConverter do
       let(:lines) { ['<template v-if="shouldShow">{{ transaction.billedDate ? transaction.billedDate : getDefaultDate() | date }}</template>'] }
 
       it 'should wrap those with function calling' do
-        results = converter.convert!
+        results = converter.convert! lines
 
         expect(results.converted).to eq true
         expect(results.lines).to eq [
